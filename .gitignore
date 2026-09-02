@@ -1,0 +1,19 @@
+# 编译产物
+*.exe
+*.dll
+*.pdb
+
+# 运行日志
+*.log
+wifi_bg.log
+
+# 临时探针/调试文件
+*.bak
+*.tmp
+*.orig
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
