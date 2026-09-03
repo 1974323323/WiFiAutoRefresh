@@ -21,17 +21,22 @@ sorting and color-coding.
   - `-bg`: headless scan loop writing to `wifi_bg.log`
   - `-svc`: installable Windows service host
 - **Custom application icon** embedded via `/win32icon`
+- **Connect / Disconnect buttons** (right-hand side of the network list): pick a
+  row and click “连接 / 断开”. The connect path tries the saved profile first
+  (`netsh wlan connect name=<profile>`), then falls back to a raw SSID connect
+  for open networks. Disconnect issues `netsh wlan disconnect`.
 
 ## Repository layout
 
 ```
-WiFiAutoRefresh.cs    # WinForms app + WlanApi P/Invoke (single file, ~480 lines)
+WiFiAutoRefresh.cs    # WinForms app + WlanApi P/Invoke (single file, ~600 lines)
 WiFiAutoRefresh.ico   # Embedded icon
 Build.ps1             # csc.exe compile script (kills stale process, then builds)
 CleanupOld.ps1        # Removes old artifacts / stale schtasks
 kill_old.ps1          # Force-kills a running instance
 kill_old2.ps1         # Same, used by Build.ps1
-WiFiAutoRefresh.iss   # Inno Setup installer script (see "Building an installer" below)
+WiFiAutoRefresh.iss   # Inno Setup installer script (Chinese wizard)
+ChineseSimplified.isl # Chinese (Simplified) language file for Inno Setup
 ```
 
 ## Quick start (developer)
@@ -74,6 +79,12 @@ Prerequisite: install [Inno Setup 6](https://jrsoftware.org/isdl.php)
 ```
 
 The installer:
+- Uses a fully **Chinese (Simplified) wizard** (welcome / finish pages and
+  checkbox labels are translated). The base translation is `ChineseSimplified.isl`,
+  placed in the Inno Setup `Languages\` folder (you can drop the file shipped
+  in the [nkh0472/Inno-Setup-Chinese-Simplified-Translation](https://github.com/nkh0472/Inno-Setup-Chinese-Simplified-Translation)
+  repo into `Languages\` if not present). The `.iss` script also overrides the
+  welcome and finish labels with task-specific Chinese text.
 - Places EXE + ICO under `%ProgramFiles%\WiFiAutoRefresh\`
 - Creates an uninstaller entry in "Add or Remove Programs"
 - Optionally creates a desktop shortcut
@@ -103,13 +114,17 @@ sc.exe create WiFiAutoRefreshService binPath= "\"%~dp0WiFiAutoRefresh.exe\" -svc
 
 ## Known caveats
 
-- **netsh mixed encoding** — earlier revisions parsed `netsh wlan show networks` and
-  hit mojibake because Windows localized labels are GBK while SSIDs come back as
-  raw UTF-8 from the router. This release uses `wlanapi` directly, sidestepping
-  the issue entirely.
+- **netsh mixed encoding** — `netsh wlan show networks` output is mixed: Windows
+  localized labels (信号 / 身份验证 / 状态) are GBK while SSIDs come back as raw
+  UTF-8 bytes from the router. Single-encoding decode always garbles half of it.
+  We capture the output as Latin1 (byte-preserving), then run two decoders
+  (GBK + UTF-8) and align them per-line before matching.
 - **WlanScan latency** — the scan is asynchronous; `netsh show` immediately
   afterwards may report cached/incomplete results. We `Thread.Sleep(2000)`
   before reading.
+- **Connect profile lookup is O(n)** — we iterate every saved WLAN profile to
+  find the one whose broadcast SSID matches the selected row. Fine for typical
+  home/office setups (10–50 profiles).
 - **PowerShell 5.1 + Chinese strings** — calling the build script from a
   Windows PowerShell 5.1 host with GBK console encoding garbles inline Chinese.
   All Chinese in build scripts uses `.NET UTF-8 encoding` via Python or
