@@ -1,5 +1,9 @@
 # WiFi Auto Refresh (Windows)
 
+[![Release v1.1.0](https://img.shields.io/badge/release-v1.1.0-blue)](https://github.com/1974323323/WiFiAutoRefresh/releases/tag/v1.1.0)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](#license)
+[![Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)]()
+
 A lightweight Windows tray/console utility that scans nearby WiFi networks every 5 seconds
 via the native `wlanapi` and displays them in a sortable, paginated WinForms window.
 The currently-connected network is highlighted green; signal strength (real RSSI) drives
